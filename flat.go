@@ -1,20 +1,25 @@
 package flat
 
 import (
+	"github.com/everisopennetworks/mergo"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/imdario/mergo"
 )
 
 // Options the flatten options.
 // By default: Demiliter = "."
 type Options struct {
-	Delimiter string
-	Safe      bool
-	MaxDepth  int
+	Delimiter      string
+	Safe           bool
+	MaxDepth       int
+	ArrayDelimiter string //PARENS (), BRACKETS [], CURLY_BRACES {}, "" NONE
 }
+
+var parensDelimiter = [2]string{"(", ")"}
+var bracketsDelimiter = [2]string{"[", "]"}
+var curlyBracesDelimiter = [2]string{"{", "}"}
+var noneDelimiter = [2]string{"", ""}
 
 // Flatten the map, it returns a map one level deep
 // regardless of how nested the original map was.
@@ -69,7 +74,24 @@ func flatten(prefix string, depth int, nested interface{}, opts *Options) (flatm
 		}
 		for i, v := range nested {
 			newKey := strconv.Itoa(i)
-			if prefix != "" {
+			var ad [2]string
+
+			switch opts.ArrayDelimiter {
+			case "PARENS":
+				ad = parensDelimiter
+			case "BRACKETS":
+				ad = bracketsDelimiter
+			case "CURLY_BRACES":
+				ad = curlyBracesDelimiter
+			default:
+				ad = noneDelimiter
+			}
+
+			newKey = ad[0] + newKey + ad[1]
+
+			if prefix != "" && opts.ArrayDelimiter != "" {
+				newKey = prefix + newKey
+			} else if prefix != "" {
 				newKey = prefix + opts.Delimiter + newKey
 			}
 			fm1, fe := flatten(newKey, depth+1, v, opts)
@@ -111,9 +133,16 @@ func Unflatten(flat map[string]interface{}, opts *Options) (nested map[string]in
 func unflatten(flat map[string]interface{}, opts *Options) (nested map[string]interface{}, err error) {
 	nested = make(map[string]interface{})
 
+	c := mergo.Config{}
+	c.Overwrite = true
+	//c.AppendSlice = true
+	mergo.WithSliceDeepCopy(&c)
+
 	for k, v := range flat {
 		temp := uf(k, v, opts).(map[string]interface{})
-		err = mergo.Merge(&nested, temp, func(c *mergo.Config) { c.Overwrite = true })
+		err = mergo.Merge(&nested, temp, func(c2 *mergo.Config) {
+			*c2 = c
+		})
 		if err != nil {
 			return
 		}
@@ -128,9 +157,17 @@ func uf(k string, v interface{}, opts *Options) (n interface{}) {
 	keys := strings.Split(k, opts.Delimiter)
 
 	for i := len(keys) - 1; i >= 0; i-- {
-		temp := make(map[string]interface{})
-		temp[keys[i]] = n
-		n = temp
+		_, err := strconv.Atoi(keys[i])
+
+		if err != nil {
+			temp := make(map[string]interface{})
+			temp[keys[i]] = n
+			n = temp
+		} else {
+			temp := make([]interface{}, 1)
+			temp[0] = n
+			n = temp
+		}
 	}
 
 	return

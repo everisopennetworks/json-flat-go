@@ -157,6 +157,18 @@ func TestFlatten(t *testing.T) {
 				"hello.world": []interface{}{"one", "two"},
 			},
 		},
+		// slice with array delimiter
+		{
+			`{"hello":{"world":[{"lorem":"one"},{"ipsum":"two"}]}}`,
+			&Options{
+				Delimiter:      ".",
+				ArrayDelimiter: "BRACKETS",
+			},
+			map[string]interface{}{
+				"hello.world[0].lorem": "one",
+				"hello.world[1].ipsum": "two",
+			},
+		},
 	}
 	for i, test := range tests {
 		var given interface{}
@@ -180,7 +192,7 @@ func TestUnflatten(t *testing.T) {
 		options *Options
 		want    map[string]interface{}
 	}{
-		{
+		/*{
 			map[string]interface{}{"hello": "world"},
 			nil,
 			map[string]interface{}{"hello": "world"},
@@ -291,6 +303,50 @@ func TestUnflatten(t *testing.T) {
 						"t": nil,
 					},
 					"k": nil,
+				},
+			},
+		},*/
+		// slice
+		{
+			map[string]interface{}{
+				"hello.world.0": "one",
+				"hello.world.1": "two",
+				"hello.world.2": "three",
+			},
+			nil,
+			map[string]interface{}{
+				"hello": map[string]interface{}{
+					"world": []interface{}{"one", "two", "three"},
+				},
+			},
+		},
+		// slice with structs
+		{
+			map[string]interface{}{
+				"hello.world.0.id":   "1",
+				"hello.world.0.desc": "one",
+				"hello.world.1.id":   "2",
+				"hello.world.1.desc": "two",
+				"hello.world.2.id":   "3",
+				"hello.world.2.desc": "three",
+			},
+			nil,
+			map[string]interface{}{
+				"hello": map[string]interface{}{
+					"world": []interface{}{
+						map[string]interface{}{
+							"id":   "1",
+							"desc": "one",
+						},
+						map[string]interface{}{
+							"id":   "2",
+							"desc": "two",
+						},
+						map[string]interface{}{
+							"id":   "3",
+							"desc": "three",
+						},
+					},
 				},
 			},
 		},
