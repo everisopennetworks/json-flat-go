@@ -1,6 +1,7 @@
 package flat
 
 import (
+	"errors"
 	"github.com/everisopennetworks/mergo"
 	"reflect"
 	"strconv"
@@ -14,12 +15,21 @@ type Options struct {
 	Safe           bool
 	MaxDepth       int
 	ArrayDelimiter string //PARENS (), BRACKETS [], CURLY_BRACES {}, "" NONE
+	SliceDeepMerge bool
 }
 
-var parensDelimiter = [2]string{"(", ")"}
-var bracketsDelimiter = [2]string{"[", "]"}
-var curlyBracesDelimiter = [2]string{"{", "}"}
-var noneDelimiter = [2]string{"", ""}
+func getArrayDelimiters(str string) ([2]string, error) {
+	switch str {
+	case "PARENS":
+		return [2]string{"(", ")"}, nil
+	case "BRACKETS":
+		return [2]string{"[", "]"}, nil
+	case "CURLY_BRACES":
+		return [2]string{"{", "}"}, nil
+	default:
+		return [2]string{}, errors.New("array delimiter not supported")
+	}
+}
 
 // Flatten the map, it returns a map one level deep
 // regardless of how nested the original map was.
@@ -74,19 +84,11 @@ func flatten(prefix string, depth int, nested interface{}, opts *Options) (flatm
 		}
 		for i, v := range nested {
 			newKey := strconv.Itoa(i)
-			var ad [2]string
 
-			switch opts.ArrayDelimiter {
-			case "PARENS":
-				ad = parensDelimiter
-			case "BRACKETS":
-				ad = bracketsDelimiter
-			case "CURLY_BRACES":
-				ad = curlyBracesDelimiter
-			default:
-				ad = noneDelimiter
+			ad, e := getArrayDelimiters(opts.ArrayDelimiter)
+			if e != nil {
+				ad = [2]string{"", ""}
 			}
-
 			newKey = ad[0] + newKey + ad[1]
 
 			if prefix != "" && opts.ArrayDelimiter != "" {
@@ -135,8 +137,11 @@ func unflatten(flat map[string]interface{}, opts *Options) (nested map[string]in
 
 	c := mergo.Config{}
 	c.Overwrite = true
-	//c.AppendSlice = true
-	mergo.WithSliceDeepCopy(&c)
+
+	if opts.SliceDeepMerge {
+		mergo.WithSliceDeepMerge(&c)
+		c.Overwrite = false
+	}
 
 	for k, v := range flat {
 		temp := uf(k, v, opts).(map[string]interface{})
@@ -154,18 +159,22 @@ func unflatten(flat map[string]interface{}, opts *Options) (nested map[string]in
 func uf(k string, v interface{}, opts *Options) (n interface{}) {
 	n = v
 
+	if ad, e := getArrayDelimiters(opts.ArrayDelimiter); e == nil {
+		k = strings.Replace(strings.Replace(k, ad[0], ".", -1), ad[1], "", -1)
+	}
+
 	keys := strings.Split(k, opts.Delimiter)
 
 	for i := len(keys) - 1; i >= 0; i-- {
-		_, err := strconv.Atoi(keys[i])
+		val, err := strconv.Atoi(keys[i])
 
 		if err != nil {
 			temp := make(map[string]interface{})
 			temp[keys[i]] = n
 			n = temp
 		} else {
-			temp := make([]interface{}, 1)
-			temp[0] = n
+			temp := make([]interface{}, val+1)
+			temp[val] = n
 			n = temp
 		}
 	}
