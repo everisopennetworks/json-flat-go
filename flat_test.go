@@ -306,24 +306,25 @@ func TestUnflatten(t *testing.T) {
 				},
 			},
 		},
-		// slice
+		// not treated as slice (lacks array delimiter)
 		{
 			map[string]interface{}{
 				"hello.world.0": "one",
 				"hello.world.1": "two",
 				"hello.world.2": "three",
 			},
-			&Options{
-				Delimiter:      ".",
-				SliceDeepMerge: true,
-			},
+			nil,
 			map[string]interface{}{
 				"hello": map[string]interface{}{
-					"world": []interface{}{"one", "two", "three"},
+					"world": map[string]interface{}{
+						"0": "one",
+						"1": "two",
+						"2": "three",
+					},
 				},
 			},
 		},
-		// slice with structs
+		// not treated as slice (lacks array delimiter)
 		{
 			map[string]interface{}{
 				"hello.world.0.id":   "1",
@@ -333,22 +334,19 @@ func TestUnflatten(t *testing.T) {
 				"hello.world.2.id":   "3",
 				"hello.world.2.desc": "three",
 			},
-			&Options{
-				Delimiter:      ".",
-				SliceDeepMerge: true,
-			},
+			nil,
 			map[string]interface{}{
 				"hello": map[string]interface{}{
-					"world": []interface{}{
-						map[string]interface{}{
+					"world": map[string]interface{}{
+						"0": map[string]interface{}{
 							"id":   "1",
 							"desc": "one",
 						},
-						map[string]interface{}{
+						"1": map[string]interface{}{
 							"id":   "2",
 							"desc": "two",
 						},
-						map[string]interface{}{
+						"2": map[string]interface{}{
 							"id":   "3",
 							"desc": "three",
 						},

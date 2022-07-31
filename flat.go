@@ -156,25 +156,38 @@ func unflatten(flat map[string]interface{}, opts *Options) (nested map[string]in
 	return
 }
 
+func getArrayIndex(key string, delim [2]string) (int, error) {
+	if strings.HasPrefix(key, delim[0]) {
+		val, err := strconv.Atoi(strings.Replace(strings.Replace(key, delim[0], "", -1), delim[1], "", -1))
+		if err == nil {
+			return val, nil
+		} else {
+			return -1, errors.New("key doesn't have int value")
+		}
+	} else {
+		return -1, errors.New("key doesn't start with delimiter")
+	}
+}
+
 func uf(k string, v interface{}, opts *Options) (n interface{}) {
 	n = v
 
-	if ad, e := getArrayDelimiters(opts.ArrayDelimiter); e == nil {
-		k = strings.Replace(strings.Replace(k, ad[0], ".", -1), ad[1], "", -1)
+	ad, e := getArrayDelimiters(opts.ArrayDelimiter)
+	if e == nil {
+		k = strings.Replace(k, ad[0], opts.Delimiter+ad[0], -1)
 	}
 
 	keys := strings.Split(k, opts.Delimiter)
 
 	for i := len(keys) - 1; i >= 0; i-- {
-		val, err := strconv.Atoi(keys[i])
-
-		if err != nil {
+		idx, errIdx := getArrayIndex(keys[i], ad)
+		if e != nil || (e == nil && errIdx != nil) {
 			temp := make(map[string]interface{})
 			temp[keys[i]] = n
 			n = temp
 		} else {
-			temp := make([]interface{}, val+1)
-			temp[val] = n
+			temp := make([]interface{}, idx+1)
+			temp[idx] = n
 			n = temp
 		}
 	}
