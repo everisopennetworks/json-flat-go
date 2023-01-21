@@ -11,11 +11,12 @@ import (
 // Options the flatten options.
 // By default: Demiliter = "."
 type Options struct {
-	Delimiter      string
-	Safe           bool
-	MaxDepth       int
-	ArrayDelimiter string //PARENS (), BRACKETS [], CURLY_BRACES {}, "" NONE
-	SliceDeepMerge bool
+	Delimiter          string
+	Safe               bool
+	MaxDepth           int
+	ArrayDelimiter     string // PARENS (), BRACKETS [], CURLY_BRACES {}, "" NONE
+	SliceDeepMerge     bool
+	OverwriteNilInMaps bool
 }
 
 func getArrayDelimiters(str string) ([2]string, error) {
@@ -137,6 +138,7 @@ func unflatten(flat map[string]interface{}, opts *Options) (nested map[string]in
 
 	c := mergo.Config{}
 	c.Overwrite = true
+	c.OverwriteNilInMaps = opts.OverwriteNilInMaps
 
 	if opts.SliceDeepMerge {
 		mergo.WithSliceDeepMerge(&c)

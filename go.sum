@@ -1,5 +1,7 @@
 github.com/everisopennetworks/mergo v0.3.14-ntt h1:u7hcoR2WC0v8g836NFes1PSOQAP8JBTqhPEE2O+xPIk=
 github.com/everisopennetworks/mergo v0.3.14-ntt/go.mod h1:0O+K8USGeNyDTcW46oUME0X039zOiHTUuUmG2TBC9WA=
+github.com/everisopennetworks/mergo v0.3.16-ntt h1:09fJ/DVH6V6yE//Be2cpYKcadaCkb+uA+Fw4L4Y8cl4=
+github.com/everisopennetworks/mergo v0.3.16-ntt/go.mod h1:0O+K8USGeNyDTcW46oUME0X039zOiHTUuUmG2TBC9WA=
 github.com/imdario/mergo v0.3.13 h1:lFzP57bqS/wsqKssCGmtLAb8A0wKjLGrve2q3PPVcBk=
 github.com/imdario/mergo v0.3.13/go.mod h1:4lJ1jqUDcsbIECGy0RUJAXNIhg+6ocWgb1ALK2O4oXg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
